@@ -1,0 +1,141 @@
+{% extends "attendance/base.html" %}
+{% load tz %}
+{% block title %}Registrar Asistencia{% endblock %}
+
+{% block content %}
+{% localtime on %}
+<div class="row justify-content-center">
+  <div class="col-lg-7 col-xl-6">
+    <div class="card bg-dark text-light border-danger shadow-sm">
+      <div class="card-header bg-danger text-white">
+        <h5 class="mb-0">Registro de Asistencia • {{ project.name }}</h5>
+      </div>
+      <div class="card-body">
+
+        {# Mensajes flash #}
+        {% if messages %}
+          {% for m in messages %}
+            <div class="alert alert-{{ m.tags }} py-2 px-3 mb-3">{{ m }}</div>
+          {% endfor %}
+        {% endif %}
+
+        {# ALERTA DE RED (JS la usa, inicialmente oculta) #}
+        <div id="net-alert" class="alert alert-danger py-2 px-3 mb-3 d-none"></div>
+
+        {# Errores no asociados a campos #}
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger py-2 px-3 mb-3">
+            {{ form.non_field_errors }}
+          </div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data" class="row g-3">
+          {% csrf_token %}
+
+          <div class="col-12">
+            <label class="form-label fw-bold">Empleado</label>
+            {{ form.employee }}
+            {% if form.employee.errors %}
+              <div class="text-danger small mt-1">{{ form.employee.errors|striptags }}</div>
+            {% endif %}
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Acción</label>
+            {{ form.action }}
+            {% if form.action.errors %}
+              <div class="text-danger small mt-1">{{ form.action.errors|striptags }}</div>
+            {% endif %}
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Tomar foto</label>
+            {{ form.evidence_photo }}
+            {% if form.evidence_photo.errors %}
+              <div class="text-danger small mt-1">{{ form.evidence_photo.errors|striptags }}</div>
+            {% else %}
+              <div class="form-text text-secondary">Es obligatorio subir una foto como constancia.</div>
+            {% endif %}
+          </div>
+
+          <div class="col-12 d-grid">
+            <button class="btn btn-danger btn-lg" type="submit" id="submit-btn-main-scan">
+              Guardar
+            </button>
+          </div>
+        </form>
+
+        <hr class="border-danger opacity-50 mt-4">
+
+        <h6 class="text-danger">Escanea este código QR para abrir este formulario:</h6>
+        <div class="text-center my-3 p-3 bg-white border rounded">
+          <img src="{% url 'qr_scan' project.slug %}" alt="QR {{ project.name }}" class="img-fluid" style="max-width:250px;">
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+{# JS: chequeo de red antes de enviar #}
+<script>
+(function() {
+  const form = document.querySelector("form");
+  if (!form) return;
+
+  const alertBox = document.getElementById("net-alert");
+  const submitBtn = document.getElementById("submit-btn-main-scan");
+
+  function resetButton() {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerText = "Guardar";
+    }
+  }
+
+  function showAlert(msg, type = "danger") {
+    if (!alertBox) {
+      alert(msg);
+      return;
+    }
+    alertBox.textContent = msg;
+    alertBox.className = "alert alert-" + type + " py-2 px-3 mb-3";
+  }
+
+  form.addEventListener("submit", function(e) {
+    e.preventDefault();  // detenemos envío mientras verificamos
+
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerText = "Enviando...";
+    }
+
+    // 1) ¿Hay conexión a nivel de dispositivo?
+    if (!navigator.onLine) {
+      showAlert("Tu conexión es inestable. No se pudo enviar el registro. Muévete a una zona con mejor señal e inténtalo nuevamente.");
+      resetButton();
+      return;
+    }
+
+    // 2) Ping rápido al servidor para confirmar que responde
+    fetch(window.location.href, {
+      method: "HEAD",
+      cache: "no-store"
+    })
+    .then(function(resp) {
+      if (!resp.ok) {
+        throw new Error("Status " + resp.status);
+      }
+      // Si todo bien, enviamos el formulario realmente
+      form.submit();
+    })
+    .catch(function() {
+      showAlert("No se pudo contactar al servidor. Verifica tu señal e inténtalo otra vez.");
+      resetButton();
+    });
+  });
+})();
+</script>
+
+{% endlocaltime %}
+{% endblock %}

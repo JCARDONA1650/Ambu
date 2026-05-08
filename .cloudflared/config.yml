@@ -1,0 +1,8 @@
+tunnel: a6ab6e8b-973c-4fa3-8383-a6c224e8d6...  # 👈 tu ID (el nombre del archivo JSON)
+
+credentials-file: /etc/cloudflared/a6a6be8b-973c-4fa3-8383-a6c224e8d6b8.json
+
+ingress:
+  - hostname: ambugroupllc.work
+    service: http://web:9000
+  - service: http_status:404

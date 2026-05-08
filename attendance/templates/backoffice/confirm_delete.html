@@ -1,0 +1,19 @@
+{% extends "attendance/base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="card bg-dark border-danger text-light">
+  <div class="card-body">
+    <h3 class="mb-3">{{ title }}</h3>
+    <p>Vas a eliminar este registro:</p>
+    <div class="alert alert-warning">
+      {{ obj }}
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Sí, eliminar</button>
+      <a href="javascript:history.back()" class="btn btn-outline-light">Cancelar</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

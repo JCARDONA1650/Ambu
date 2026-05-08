@@ -1,0 +1,269 @@
+{% extends "attendance/base.html" %}
+{% load l10n %}
+{% load tz %}
+{% block title %}Finanzas — {{ project.name }}{% endblock %}
+{% block content %}
+{% localtime on %}
+<style>
+  .chart-box{height:360px;}
+  .donut-wrap{display:flex;gap:16px;flex-wrap:wrap;}
+  .donut-card{width:260px;}
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="text-danger mb-0">Finanzas: {{ project.name }}</h3>
+  <div>
+    <a href="{% url 'income_new' %}" class="btn btn-sm btn-outline-danger me-2">➕ Ingreso</a>
+    <a href="{% url 'expense_new' %}" class="btn btn-sm btn-outline-danger">➖ Gasto</a>
+  </div>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+  <div class="col-md-3">
+    <label class="form-label fw-bold">Mes</label>
+    <input type="month" name="month" value="{{ month }}" class="form-control bg-dark text-light border-danger">
+  </div>
+  <div class="col-md-3">
+    <label class="form-label fw-bold">Año</label>
+    <input type="number" name="year" value="{{ year }}" class="form-control bg-dark text-light border-danger">
+  </div>
+  <div class="col-md-2 d-flex align-items-end">
+    <button class="btn btn-danger w-100">Filtrar</button>
+  </div>
+</form>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="card bg-dark text-light border-danger"><div class="card-body">
+      <div class="text-secondary">Valor contrato</div>
+      <div class="h4 text-danger">{{ contract_value_fmt }}</div>
+    </div></div>
+  </div>
+  <div class="col-md-3">
+    <div class="card bg-dark text-light border-danger"><div class="card-body">
+      <div class="text-secondary">Ingresos (mes)</div>
+      <div class="h4 text-success">{{ inc_total_fmt }}</div>
+    </div></div>
+  </div>
+  <div class="col-md-3">
+    <div class="card bg-dark text-light border-danger"><div class="card-body">
+      <div class="text-secondary">Gastos (mes)</div>
+      <div class="h4 text-warning">{{ exp_total_fmt }}</div>
+    </div></div>
+  </div>
+  <div class="col-md-3">
+    <div class="card bg-dark text-light border-danger"><div class="card-body">
+      <div class="text-secondary">Nómina (mes)</div>
+      <div class="h4 text-info">{{ payroll_cost_fmt }}</div>
+    </div></div>
+  </div>
+</div>
+
+<div class="card bg-dark text-light border-danger mb-4">
+  <div class="card-body">
+    <div class="d-flex justify-content-between">
+      <div class="h5 mb-0">Evolución del balance (tipo trading)</div>
+      <div class="h5 {% if balance >= 0 %}text-success{% else %}text-warning{% endif %} mb-0">
+        {{ balance_fmt }}
+      </div>
+    </div>
+    <hr class="border-danger opacity-50">
+
+    <!-- Línea tipo trading -->
+    <div class="chart-box mb-3">
+      <canvas id="finLineChart"></canvas>
+    </div>
+
+    <!-- Donut Disponible vs Gastado -->
+    <div class="donut-wrap">
+      <div class="card bg-dark text-light border-danger donut-card">
+        <div class="card-header bg-danger text-white py-2">Disponible vs Gastado</div>
+        <div class="card-body position-relative">
+          <canvas id="finDonut" width="240" height="240"></canvas>
+          <div id="donutCenterText"
+               class="position-absolute top-50 start-50 translate-middle fw-bold"
+               style="font-size:1.1rem;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Datos para las gráficas -->
+    {{ line_values|json_script:"line-data" }}
+    {{ chart_values|json_script:"chart-data" }}
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card bg-dark text-light border-danger h-100">
+      <div class="card-header bg-danger text-white">Ingresos recientes</div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-dark table-striped align-middle">
+            <thead class="table-danger text-dark">
+              <tr><th>Fecha</th><th>Descripción</th><th class="text-end">Monto</th></tr>
+            </thead>
+            <tbody>
+              {% for i in incomes %}
+              <tr>
+                <td>{{ i.date }}</td>
+                <td>{{ i.description|default:"—" }}</td>
+                <td class="text-end">
+                  <span class="money-latam" data-amount="{{ i.amount|unlocalize }}"></span>
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="3" class="text-center text-muted">Sin ingresos</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card bg-dark text-light border-danger h-100">
+      <div class="card-header bg-danger text-white">Gastos recientes</div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-dark table-striped align-middle">
+            <thead class="table-danger text-dark">
+              <tr><th>Fecha</th><th>Categoría</th><th>Descripción</th><th class="text-end">Monto</th></tr>
+            </thead>
+            <tbody>
+              {% for e in expenses %}
+              <tr>
+                <td>{{ e.date }}</td>
+                <td>{{ e.get_category_display }}</td>
+                <td>{{ e.description|default:"—" }}</td>
+                <td class="text-end">
+                  <span class="money-latam" data-amount="{{ e.amount|unlocalize }}"></span>
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="4" class="text-center text-muted">Sin gastos</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // ====== Formateador LATAM (es-CO, USD) ======
+  const fmtLatam = v => new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(Number(v) || 0);
+
+  // Pinta todos los .money-latam (tablas detalle)
+  document.querySelectorAll('.money-latam').forEach(el => {
+    const raw = el.getAttribute('data-amount');
+    el.textContent = fmtLatam(raw);
+  });
+
+  // ====== Gráficos ======
+  const lineArr = JSON.parse(document.getElementById('line-data').textContent || '[]');   // [Contrato, +Ingresos, −Gastos, −Nómina, Balance]
+  const dataArr = JSON.parse(document.getElementById('chart-data').textContent || '[]');  // [contract, incomes, expenses, payroll, balance]
+  const [contractV=0, incomesV=0, expensesV=0, payrollV=0, balanceV=0] = dataArr;
+
+  // Plugin para etiquetas en puntos con formato LATAM
+  const valueLabelPlugin = {
+    id: 'valueLabel',
+    afterDatasetsDraw(chart) {
+      const {ctx} = chart;
+      ctx.save();
+      ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto';
+      ctx.fillStyle = '#adb5bd';
+      const meta = chart.getDatasetMeta(0);
+      meta.data.forEach((pt, i) => {
+        if (!pt) return;
+        const {x, y} = pt.tooltipPosition();
+        const label = fmtLatam(chart.data.datasets[0].data[i]);
+        ctx.fillText(label, x - ctx.measureText(label).width/2, y - 10);
+      });
+      ctx.restore();
+    }
+  };
+
+  // --- Línea tipo trading (balance progresivo) ---
+  const ctxLine = document.getElementById('finLineChart').getContext('2d');
+  const gradient = ctxLine.createLinearGradient(0, 0, 0, ctxLine.canvas.height);
+  gradient.addColorStop(0, 'rgba(220,53,69,0.35)');
+  gradient.addColorStop(1, 'rgba(220,53,69,0.05)');
+
+  new Chart(ctxLine, {
+    type: 'line',
+    data: {
+      labels: ['Contrato','+Ingresos','−Gastos','−Nómina','Balance'],
+      datasets: [{
+        label: 'Balance',
+        data: lineArr,
+        borderColor: '#dc3545',
+        backgroundColor: gradient,
+        tension: 0.35,
+        fill: true,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        pointBackgroundColor: '#dc3545',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 1.5
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: { label: ctx => ` ${fmtLatam(ctx.parsed.y)}` }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#adb5bd' } },
+        y: {
+          beginAtZero: false,
+          ticks: { color: '#adb5bd', callback: v => fmtLatam(v) },
+          grid: { color: 'rgba(255,255,255,0.06)' }
+        }
+      }
+    },
+    plugins: [valueLabelPlugin]
+  });
+
+  // --- Donut Disponible vs Gastado ---
+  const available = (contractV + incomesV);
+  const spent = (expensesV + payrollV);
+  const remaining = Math.max(available - spent, 0);
+
+  new Chart(document.getElementById('finDonut'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Disponible','Gastado'],
+      datasets: [{
+        data: [remaining, spent],
+        backgroundColor: ['#28a745','#dc3545'],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      plugins: {
+        legend: { position: 'bottom', labels: { color: '#adb5bd' } },
+        tooltip: { callbacks: { label: ctx => `${ctx.label}: ${fmtLatam(ctx.parsed)}` } }
+      },
+      cutout: '70%'
+    }
+  });
+
+  const total = remaining + spent;
+  const percentSpent = total > 0 ? ((spent / total) * 100).toFixed(1) : 0;
+  document.getElementById("donutCenterText").innerText = `${percentSpent}% Gastado`;
+</script>
+{% endlocaltime %}
+{% endblock %}

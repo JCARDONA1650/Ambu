@@ -1,0 +1,43 @@
+{% extends "attendance/base.html" %}
+{% load tz %}
+{% block title %}Registrar gasto{% endblock %}
+
+{% block content %}
+{% localtime on %}
+
+<h3 class="mb-4 text-danger">Registrar gasto del proyecto</h3>
+
+<div class="card bg-dark text-light border-danger shadow-sm">
+  <div class="card-body">
+    <form method="post" class="row g-3">
+      {% csrf_token %}
+      <div class="col-md-3">
+        <label class="form-label fw-bold">Proyecto</label>
+        {{ form.project }}
+      </div>
+      <div class="col-md-3">
+        <label class="form-label fw-bold">Fecha</label>
+        {{ form.date }}
+      </div>
+      <div class="col-md-3">
+        <label class="form-label fw-bold">Categoría</label>
+        {{ form.category }}
+      </div>
+      <div class="col-md-3">
+        <label class="form-label fw-bold">Monto (USD)</label>
+        {{ form.amount }}
+      </div>
+      <div class="col-12">
+        <label class="form-label fw-bold">Descripción</label>
+        {{ form.description }}
+      </div>
+      <div class="col-12 d-grid d-md-flex gap-2">
+        <button class="btn btn-danger">Guardar</button>
+        <a class="btn btn-outline-danger" href="{% url 'dashboard' %}">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endlocaltime %}
+{% endblock %}

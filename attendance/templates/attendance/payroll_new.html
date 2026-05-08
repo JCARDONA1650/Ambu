@@ -1,0 +1,23 @@
+{% extends "attendance/base.html" %}
+{% load tz %}
+{% block title %}Nueva nómina{% endblock %}
+{% block content %}
+{% localtime on %}
+<h3 class="text-danger mb-3">Nuevo periodo de nómina</h3>
+<form method="post" class="row g-3">
+  {% csrf_token %}
+  <div class="col-md-3">
+    <label class="form-label fw-bold">Inicio</label>{{ form.start_date }}
+  </div>
+  <div class="col-md-3">
+    <label class="form-label fw-bold">Fin</label>{{ form.end_date }}
+  </div>
+  <div class="col-md-4">
+    <label class="form-label fw-bold">Proyecto (opcional)</label>{{ form.project }}
+  </div>
+  <div class="col-12 d-grid">
+    <button class="btn btn-danger">Crear</button>
+  </div>
+</form>
+{% endlocaltime %}
+{% endblock %}

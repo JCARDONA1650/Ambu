@@ -1,0 +1,69 @@
+{% extends "attendance/base.html" %}
+{% block title %}Panel Admin{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="mb-0">Panel Administrativo</h2>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-4">
+    <div class="card bg-dark border-danger text-light">
+      <div class="card-body">
+        <h5>Proyectos</h5>
+        <p class="display-6">{{ projects_count }}</p>
+        <a href="{% url 'bo_project_list' %}" class="btn btn-danger">Gestionar</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card bg-dark border-danger text-light">
+      <div class="card-body">
+        <h5>Empleados</h5>
+        <p class="display-6">{{ employees_count }}</p>
+        <a href="{% url 'bo_employee_list' %}" class="btn btn-danger">Gestionar</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card bg-dark border-danger text-light">
+      <div class="card-body">
+        <h5>Asistencias</h5>
+        <p class="display-6">{{ attendance_count }}</p>
+        <a href="{% url 'bo_attendance_list' %}" class="btn btn-danger">Gestionar</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card bg-dark border-danger text-light">
+      <div class="card-body">
+        <h5>Nómina</h5>
+        <p class="display-6">{{ payroll_count }}</p>
+        <a href="{% url 'bo_payroll_list' %}" class="btn btn-danger">Gestionar</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card bg-dark border-danger text-light">
+      <div class="card-body">
+        <h5>Ingresos</h5>
+        <p class="display-6">{{ income_count }}</p>
+        <a href="{% url 'bo_income_list' %}" class="btn btn-danger">Gestionar</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card bg-dark border-danger text-light">
+      <div class="card-body">
+        <h5>Gastos</h5>
+        <p class="display-6">{{ expense_count }}</p>
+        <a href="{% url 'bo_expense_list' %}" class="btn btn-danger">Gestionar</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

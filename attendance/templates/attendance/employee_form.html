@@ -1,0 +1,35 @@
+{% extends "attendance/base.html" %}
+{% load tz %}
+{% block title %}{{ emp|default:'Nuevo' }} Empleado{% endblock %}
+{% block content %}
+{% localtime on %}
+
+<h3 class="mb-4 text-danger">{{ emp|default:'Nuevo' }} Empleado</h3>
+
+<form method="post" class="row g-3">
+  {% csrf_token %}
+  <div class="col-md-6">
+    <label class="form-label fw-bold">Nombre completo</label>
+    {{ form.full_name }}
+  </div>
+  <div class="col-md-6">
+    <label class="form-label fw-bold">Cargo</label>
+    {{ form.position }}
+  </div>
+  <div class="col-md-4">
+    <label class="form-label fw-bold">Tarifa por hora (USD)</label>
+    {{ form.hourly_rate }}
+  </div>
+  <div class="col-md-2 d-flex align-items-center">
+    <div class="form-check mt-3">
+      {{ form.active }}
+      <label class="form-check-label">Activo</label>
+    </div>
+  </div>
+  <div class="col-12 d-grid">
+    <button class="btn btn-danger">Guardar</button>
+  </div>
+</form>
+
+{% endlocaltime %}
+{% endblock %}

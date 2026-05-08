@@ -1,0 +1,28 @@
+services:
+  web:
+    build: .
+    container_name: django_app
+    ports:
+      - "9000:9000"
+    depends_on:
+      - db
+    restart: always
+
+  db:
+    image: postgres:15
+    container_name: postgres_db
+    environment:
+      POSTGRES_DB: ambu_db
+      POSTGRES_USER: ambu_user
+      POSTGRES_PASSWORD: ambu_pass
+    restart: always
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    command: tunnel run
+    volumes:
+      - ./.cloudflared:/etc/cloudflared
+    depends_on:
+      - web
+    restart: always

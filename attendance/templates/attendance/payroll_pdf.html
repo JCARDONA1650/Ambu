@@ -1,0 +1,142 @@
+{% load static %}
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Nómina PDF</title>
+</head>
+<body>
+  <table style="width:100%; border:0; margin-bottom:8px;">
+    <tr>
+      <td style="width:180px;">
+        {% if logo_path %}
+          <img src="file://{{ logo_path }}" class="logo">
+        {% else %}
+          <img src="{% static 'img/LOGO_PERFIL_AMBU_GROUP.png' %}" class="logo">
+        {% endif %}
+      </td>
+      <td>
+        {% if mode == 'period' %}
+          <h2>Nómina: {{ period.start_date }} → {{ period.end_date }}</h2>
+          <div><strong>Proyecto:</strong> {{ project_name }}</div>
+        {% else %}
+          <h2>{{ title }}</h2>
+          <div><strong>Rango:</strong> {{ range }} &nbsp; | &nbsp; <strong>Proyecto:</strong> {{ project_name }}</div>
+        {% endif %}
+      </td>
+    </tr>
+  </table>
+
+  {% if mode == 'period' %}
+    <!-- RESUMEN DE LÍNEAS -->
+    <h3>Resumen del período</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Empleado</th>
+          <th class="center">Horas (HH:MM)</th>
+          <th class="right">Tarifa</th>
+          <th class="right">Base</th>
+          <th class="right">Ajuste</th>
+          <th class="right">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for r in lines_fmt %}
+        <tr>
+          <td>{{ r.name }}</td>
+          <td class="center">{{ r.hours_hhmm }}</td>
+          <td class="right">{{ r.rate }}</td>
+          <td class="right">{{ r.base }}</td>
+          <td class="right">{{ r.adj }}</td>
+          <td class="right">{{ r.total }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr class="totals">
+          <td colspan="3" class="right">Totales:</td>
+          <td class="right">{{ grand_base_fmt }}</td>
+          <td class="right">{{ grand_adj_fmt }}</td>
+          <td class="right">{{ grand_total_fmt }}</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <!-- SEMANAS -->
+    <h3 style="margin-top:10px;">Semanas (L→D)</h3>
+    {% for week in weeks %}
+      <div style="margin-top:6px; font-weight:bold;">
+        Semana: {{ week.week_start }} → {{ week.week_end }}
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>NOMBRES Y APELLIDOS</th>
+            {% for col in week.columns %}<th class="center">{{ col }}</th>{% endfor %}
+            <th class="center">TOTAL HORAS</th>
+            <th class="center">VALOR H.</th>
+            <th class="center">TOTAL PAGAR</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in week.rows %}
+          <tr>
+            <td>{{ r.name }}</td>
+            {% for h in r.day_hours_hhmm %}<td class="center">{{ h }}</td>{% endfor %}
+            <td class="center">{{ r.total_hours_hhmm }}</td>
+            <td class="center">{{ r.hourly }}</td>
+            <td class="center">{{ r.total_pay }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr class="totals">
+            <td class="right">TOTAL HORAS</td>
+            {% for col in week.columns %}<td></td>{% endfor %}
+            <td class="center">{{ week.total_hours_all_hhmm }}</td>
+            <td class="right">NÓMINA</td>
+            <td class="center">{{ week.total_payroll }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    {% endfor %}
+
+    <div style="margin-top:8px; font-weight:bold;">
+      TOTAL HORAS (período): {{ grand_total_hours }} &nbsp;&nbsp; | &nbsp;&nbsp;
+      NÓMINA (período): {{ grand_total_payroll }}
+    </div>
+
+  {% else %}
+    <!-- ALCANCE (quincena/mes/año) -->
+    <table>
+      <thead>
+        <tr>
+          <th>Empleado</th>
+          <th class="center">Horas (HH:MM)</th>
+          <th class="center">Horas (dec.)</th>
+          <th class="right">Tarifa</th>
+          <th class="right">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td>{{ r.name }}</td>
+          <td class="center">{{ r.hhmm }}</td>
+          <td class="center">{{ r.hours }}</td>
+          <td class="right">{{ r.rate }}</td>
+          <td class="right">{{ r.total }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr class="totals">
+          <td colspan="4" class="right">TOTAL</td>
+          <td class="right">{{ grand_total }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  {% endif %}
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!-- attendance/templates/attendance/dashboard.html -->
+{% extends "attendance/base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<h3 class="mb-4 text-danger">Proyectos</h3>
+
+<div class="row g-4 mb-5">
+  {% for p in projects %}
+  <div class="col-md-4">
+    <div class="card bg-dark text-light border-danger shadow-sm h-100">
+      <div class="card-header bg-danger text-white">
+        <h5 class="mb-0">{{ p.name }}</h5>
+      </div>
+      <div class="card-body d-flex flex-column">
+        <p class="flex-grow-1">Registrar asistencia y ver QR del proyecto.</p>
+        <div class="d-grid gap-2">
+          <a href="{% url 'scan' p.slug %}" class="btn btn-danger">Abrir registro</a>
+          <a href="{% url 'report' %}?project={{ p.slug }}" class="btn btn-outline-danger">Ver reportes</a>
+          {% if request.user.is_superuser %}
+            <a href="{% url 'project_finance_dashboard' p.slug %}" class="btn btn-outline-danger">Finanzas</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+    <p class="text-muted">No tienes proyectos asignados.</p>
+  {% endfor %}
+</div>
+
+{% if request.user.is_superuser %}
+  <hr class="border-danger opacity-50">
+
+  <!-- Sección Empleados (solo admin) -->
+  <h3 class="mb-4 text-danger">Empleados</h3>
+  <div class="card bg-dark text-light border-danger shadow-sm mb-4">
+    <div class="card-body">
+      <p class="mb-3">Gestiona el listado de empleados, sus cargos y tarifas por hora.</p>
+      <div class="d-grid gap-2 d-md-flex">
+        <a href="{% url 'employee_list' %}" class="btn btn-danger">Ver empleados</a>
+        <a href="{% url 'employee_new' %}" class="btn btn-outline-danger">➕ Nuevo empleado</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sección Nómina (solo admin) -->
+  <h3 class="mb-4 text-danger">Nómina</h3>
+  <div class="card bg-dark text-light border-danger shadow-sm">
+    <div class="card-body">
+      <p class="mb-3">Calcula y ajusta pagos quincenales por empleado. Puedes filtrar por proyecto o incluir todos.</p>
+      <div class="d-grid gap-2 d-md-flex">
+        <a href="{% url 'payroll_list' %}" class="btn btn-danger">Ver periodos</a>
+        <a href="{% url 'payroll_new' %}" class="btn btn-outline-danger">➕ Nuevo periodo</a>
+        <a href="{% url 'payroll_export_xlsx' %}" class="btn btn-outline-danger">⬇️ Exportar nómina</a>
+      </div>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

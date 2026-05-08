@@ -1,0 +1,34 @@
+{% extends "attendance/base.html" %}
+{% block title %}Nuevo Proyecto{% endblock %}
+
+{% block content %}
+<h3 class="mb-4 text-danger">Crear proyecto</h3>
+
+<div class="card bg-dark text-light border-danger shadow-sm">
+  <div class="card-body">
+    <form method="post" class="row g-3">
+      {% csrf_token %}
+      <div class="col-md-6">
+        <label class="form-label fw-bold">Nombre</label>
+        {{ form.name }}
+      </div>
+      <div class="col-md-6">
+        <label class="form-label fw-bold">Valor del contrato (USD)</label>
+        {{ form.contract_value }}
+      </div>
+      <div class="col-md-6">
+        <label class="form-label fw-bold">Supervisores</label>
+        {{ form.supervisors }}
+      </div>
+      <div class="col-md-6">
+        <label class="form-label fw-bold">Empleados</label>
+        {{ form.employees }}
+      </div>
+      <div class="col-12 d-grid d-md-flex gap-2">
+        <button class="btn btn-danger">Guardar</button>
+        <a class="btn btn-outline-danger" href="{% url 'dashboard' %}">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

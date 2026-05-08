@@ -1,0 +1,86 @@
+{% extends "attendance/base.html" %}
+{% load tz %}
+{% block title %}Empleados{% endblock %}
+{% block content %}
+{% localtime on %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="text-danger mb-0">Empleados</h3>
+  <a href="{% url 'employee_new' %}" class="btn btn-danger">Nuevo empleado</a>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+  <div class="col-md-4">
+    <label class="form-label fw-bold">Proyecto</label>
+    <select name="project" class="form-select bg-dark text-light border-danger">
+      <option value="">Todos</option>
+      {% for p in projects %}
+        <option value="{{ p.slug }}" {% if q_proj == p.slug %}selected{% endif %}>{{ p.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-4">
+    <label class="form-label fw-bold">Nombre</label>
+    <input type="text"
+           name="name"
+           value="{{ q_name }}"
+           class="form-control bg-dark text-light border-danger"
+           placeholder="Buscar por nombre">
+  </div>
+  <div class="col-md-2 d-flex align-items-end">
+    <button class="btn btn-danger w-100">Filtrar</button>
+  </div>
+  {% if q_proj or q_name %}
+  <div class="col-md-2 d-flex align-items-end">
+    <a class="btn btn-outline-danger w-100" href="{% url 'employee_list' %}">Limpiar</a>
+  </div>
+  {% endif %}
+</form>
+
+<div class="table-responsive">
+  <table class="table table-dark table-striped align-middle border border-danger">
+    <thead class="table-danger text-dark">
+      <tr>
+        <th>Nombre</th>
+        <th>Proyectos</th>
+        <th>Cargo</th>
+        <th>Tarifa (USD)</th>
+        <th>Activo</th>
+        <th class="text-end"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for e in employees %}
+      <tr>
+        <td>{{ e.full_name }}</td>
+        <td style="max-width: 320px;">
+          {% for pr in e.projects.all %}
+            <span class="badge text-bg-secondary me-1 mb-1">{{ pr.name }}</span>
+          {% empty %}
+            <span class="text-muted">—</span>
+          {% endfor %}
+        </td>
+        <td>{{ e.position|default:"—" }}</td>
+        <td>${{ e.hourly_rate|default:"0.00" }}</td>
+        <td>
+          {% if e.active %}
+            <span class="badge text-bg-success">Sí</span>
+          {% else %}
+            <span class="badge text-bg-secondary">No</span>
+          {% endif %}
+        </td>
+        <td class="text-end">
+          <a class="btn btn-sm btn-outline-danger" href="{% url 'employee_edit' e.pk %}">Editar</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="6" class="text-center text-muted">Sin empleados</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endlocaltime %}
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "attendance/base.html" %}
+{% load tz %}
+{% block title %}Nómina{% endblock %}
+
+{% block content %}
+{% localtime on %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="text-danger mb-0">Nómina quincenal</h3>
+  <a class="btn btn-danger" href="{% url 'payroll_new' %}">Nuevo periodo</a>
+</div>
+
+<div class="accordion" id="payrollAccordion">
+  {% for g in groups %}
+    <div class="accordion-item bg-dark border border-danger">
+      <h2 class="accordion-header">
+        <button class="accordion-button collapsed bg-dark text-light"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#group{{ forloop.counter }}"
+                aria-expanded="false"
+                aria-controls="group{{ forloop.counter }}">
+          {{ g.name }}
+          <span class="ms-3 small text-secondary">
+            ({{ g.open_count }} abiertas, {{ g.closed_count }} cerradas)
+          </span>
+        </button>
+      </h2>
+
+      <div id="group{{ forloop.counter }}"
+           class="accordion-collapse collapse"
+           data-bs-parent="#payrollAccordion">
+        <div class="accordion-body p-0">
+          <div class="table-responsive">
+            <table class="table table-dark table-striped border border-danger align-middle mb-0">
+              <thead class="table-danger text-dark">
+                <tr>
+                  <th>Rango</th>
+                  <th>Estado</th>
+                  <th class="text-end"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for p in g.periods %}
+                  <tr>
+                    <td>{{ p.start_date }} &rarr; {{ p.end_date }}</td>
+                    <td>{{ p.get_status_display }}</td>
+                    <td class="text-end">
+                      <a class="btn btn-sm btn-outline-danger" href="{% url 'payroll_detail' p.pk %}">Abrir</a>
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="3" class="text-center text-muted">Sin periodos</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <div class="text-muted">Sin periodos registrados.</div>
+  {% endfor %}
+</div>
+
+{% endlocaltime %}
+{% endblock %}

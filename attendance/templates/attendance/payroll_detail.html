@@ -1,0 +1,216 @@
+{% extends "attendance/base.html" %}
+{% load tz %}
+{% block title %}Nómina{% endblock %}
+
+{% block content %}
+{% localtime on %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="text-danger mb-0">
+    Nómina: {{ period.start_date }} → {{ period.end_date }}
+    <small class="text-secondary">
+      ({{ period.project.name|default:"Todos los proyectos" }})
+    </small>
+  </h3>
+
+  <div class="d-flex align-items-center gap-2">
+    {# ───────── Dropdown Exportar Excel ───────── #}
+    <div class="btn-group">
+      <button type="button" class="btn btn-danger dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+        Exportar Excel
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li>
+          <a class="dropdown-item"
+             href="{% url 'payroll_export_xlsx' %}?period_pk={{ period.pk }}{% if period.project_id %}&project={{ period.project_id }}{% endif %}">
+            Periodo actual ({{ period.start_date }} → {{ period.end_date }})
+          </a>
+        </li>
+        <li><hr class="dropdown-divider"></li>
+        <li>
+          <a class="dropdown-item"
+             href="{% url 'payroll_export_xlsx' %}?scope=quincena{% if period.project_id %}&project={{ period.project_id }}{% endif %}">
+            Quincena (auto)
+          </a>
+        </li>
+        <li>
+          <a class="dropdown-item"
+             href="{% url 'payroll_export_xlsx' %}?scope=mes{% if period.project_id %}&project={{ period.project_id }}{% endif %}">
+            Mes actual
+          </a>
+        </li>
+        <li>
+          <a class="dropdown-item"
+             href="{% url 'payroll_export_xlsx' %}?scope=anio{% if period.project_id %}&project={{ period.project_id }}{% endif %}">
+            Año actual (totalizado)
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    {# ───────── Dropdown Exportar PDF (horizontal) ───────── #}
+    <div class="btn-group">
+      <button type="button" class="btn btn-outline-danger dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+        Exportar PDF
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li>
+          <a class="dropdown-item"
+             href="{% url 'payroll_export_pdf' %}?period_pk={{ period.pk }}{% if period.project_id %}&project={{ period.project_id }}{% endif %}">
+            Periodo actual ({{ period.start_date }} → {{ period.end_date }})
+          </a>
+        </li>
+        <li><hr class="dropdown-divider"></li>
+        <li>
+          <a class="dropdown-item"
+             href="{% url 'payroll_export_pdf' %}?scope=quincena{% if period.project_id %}&project={{ period.project_id }}{% endif %}">
+            Quincena (auto)
+          </a>
+        </li>
+        <li>
+          <a class="dropdown-item"
+             href="{% url 'payroll_export_pdf' %}?scope=mes{% if period.project_id %}&project={{ period.project_id }}{% endif %}">
+            Mes actual
+          </a>
+        </li>
+        <li>
+          <a class="dropdown-item"
+             href="{% url 'payroll_export_pdf' %}?scope=anio{% if period.project_id %}&project={{ period.project_id }}{% endif %}">
+            Año actual (totalizado)
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    {% if period.is_open %}
+      <a class="btn btn-outline-danger" href="{% url 'payroll_recalc' period.pk %}">Recalcular</a>
+      <form method="post" action="{% url 'payroll_close' period.pk %}" class="d-inline m-0">
+        {% csrf_token %}
+        <button class="btn btn-danger">Cerrar periodo</button>
+      </form>
+    {% else %}
+      <span class="badge text-bg-danger">Cerrada</span>
+    {% endif %}
+  </div>
+</div>
+
+{# =================== TABLA DE LÍNEAS (AJUSTES) =================== #}
+<div class="table-responsive mb-4">
+  <table class="table table-dark table-striped border border-danger align-middle">
+    <thead class="table-danger text-dark">
+      <tr>
+        <th>Empleado</th>
+        <th>Horas (HH:MM)</th>
+        <th>Tarifa</th>
+        <th>Base</th>
+        <th>Ajuste</th>
+        <th>Total</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for l in lines_fmt %}
+      <tr>
+        <td>{{ l.employee.full_name }}</td>
+        <td class="fw-semibold">{{ l.hours_hhmm }}</td>
+        <td>{{ l.rate }}</td>
+        <td>{{ l.base }}</td>
+        <td>{{ l.adj }}</td>
+        <td><strong class="text-danger">{{ l.total }}</strong></td>
+        <td class="text-end">
+          {% if period.is_open %}
+            <a class="btn btn-sm btn-outline-danger" href="?line={{ l.obj.id }}">Ajustar</a>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" class="text-center text-muted">Sin líneas</td></tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr class="table-secondary text-dark">
+        <th colspan="3" class="text-end">Totales del período:</th>
+        <th>{{ grand_base_fmt }}</th>
+        <th>{{ grand_adj_fmt }}</th>
+        <th colspan="2"><strong>{{ grand_total_fmt }}</strong></th>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+
+{% if form %}
+<hr class="border-danger opacity-50 my-3">
+<h5 class="text-danger">Ajuste de línea</h5>
+<form method="post" class="row g-3">
+  {% csrf_token %}
+  <div class="col-md-3">
+    <label class="form-label fw-bold">Ajuste (+/-)</label>{{ form.adjustment }}
+  </div>
+  <div class="col-md-6">
+    <label class="form-label fw-bold">Notas</label>{{ form.notes }}
+  </div>
+  <div class="col-md-3 d-grid align-items-end">
+    <button class="btn btn-danger">Guardar ajuste</button>
+  </div>
+</form>
+{% endif %}
+
+{# =================== LISTADO POR SEMANAS (LÍNEA DIVISORIA) =================== #}
+<hr class="border-danger opacity-75 my-4">
+
+<h4 class="mb-3 text-danger fw-bold">{{ title }}</h4>
+
+{% for week in weeks %}
+  <div class="table-responsive mb-4">
+    <table class="table table-dark table-bordered align-middle">
+      <thead class="table-danger text-dark">
+        <tr>
+          <th style="min-width:260px;">NOMBRES Y APELLIDOS</th>
+          {% for col in week.columns %}
+            <th class="text-center">{{ col }}</th>
+          {% endfor %}
+          <th class="text-center">TOTAL HORAS</th>
+          <th class="text-center">VALOR H.</th>
+          <th class="text-center">TOTAL PAGAR</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in week.rows %}
+        <tr>
+          <td>{{ r.name }}</td>
+          {% for h in r.day_hours_hhmm %}
+            <td class="text-center">{{ h }}</td>
+          {% endfor %}
+          <td class="text-center fw-semibold">{{ r.total_hours_hhmm }}</td>
+          <td class="text-center">{{ r.hourly }}</td>
+          <td class="text-center text-danger fw-bold">{{ r.total_pay }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr class="table-secondary text-dark">
+          <th class="text-end">TOTAL HORAS</th>
+          {% for col in week.columns %}<th></th>{% endfor %}
+          <th class="text-center">{{ week.total_hours_all_hhmm }}</th>
+          <th class="text-end">NÓMINA</th>
+          <th class="text-center fw-bold">{{ week.total_payroll }}</th>
+        </tr>
+      </tfoot>
+    </table>
+    <div class="small text-secondary">
+      Semana: {{ week.week_start }} → {{ week.week_end }}
+    </div>
+  </div>
+
+  {% if week.show_divider and not forloop.last %}
+    <hr class="border-danger opacity-50 my-4">
+  {% endif %}
+{% endfor %}
+
+<div class="alert alert-danger d-flex justify-content-between align-items-center">
+  <span class="fw-semibold">TOTAL HORAS (período): {{ grand_total_hours }}</span>
+  <span class="fw-bold">NÓMINA (período): {{ grand_total_payroll }}</span>
+</div>
+
+{% endlocaltime %}
+{% endblock %}
